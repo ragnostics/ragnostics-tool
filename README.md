@@ -1,10 +1,24 @@
 # RAGnostics - Know if RAG will fail BEFORE you build it
 
+**Version:** 1.1.0 (Now with directory scanning!)  
+**License:** MIT (Free to use, modify, distribute)
+
 A simple tool that analyzes your documents and queries to predict if RAG (Retrieval-Augmented Generation) is the right solution for your use case.
 
 ## Why This Exists
 
 89% of RAG projects fail because they try to use RAG for the wrong type of data or queries. This tool tells you in 5 minutes what would otherwise take months and $50K-500K to discover.
+
+## Features
+
+- **Document Analysis** - Checks if your documents work with RAG
+- **Query Analysis** - Determines if your queries can be answered by RAG  
+- **Cost Estimation** - Shows real costs vs alternatives
+- **Alternative Recommendations** - Suggests better solutions when RAG won't work
+- **Directory Scanning** - Analyzes entire folder structures for RAG suitability
+- **Correlation Detection** - Identifies impossible "correlate everything" attempts
+- **Noise Level Assessment** - Warns when too many files will cause random results
+- **Multi-format Analysis** - Detects mixed data types that confuse RAG
 
 ## Quick Start
 
@@ -51,6 +65,18 @@ python3 ragnostics-core.py --docs *.pdf *.docx
 python3 ragnostics-core.py --docs report.pdf data.xlsx readme.txt
 ```
 
+### Scan entire directories (NEW)
+```bash
+# Scan entire directory recursively
+python3 ragnostics-core.py --scan-directory /path/to/documents
+
+# Scan without subdirectories
+python3 ragnostics-core.py --scan-directory ./docs --no-recursive
+
+# Scan directory with correlation check
+python3 ragnostics-core.py --scan-directory ./data --queries "Find patterns across all departments"
+```
+
 ### Test if your queries can be answered by RAG
 ```bash
 # Simple queries
@@ -70,9 +96,56 @@ python3 ragnostics-core.py --queries-file queries.txt
 # Analyze everything and save report
 python3 ragnostics-core.py --docs *.pdf --queries "How do I login?" --output report.txt
 
+# Full directory analysis with queries
+python3 ragnostics-core.py --scan-directory ./company_data \
+  --queries-file queries.txt \
+  --output analysis_report.txt
+
 # Get JSON output for automation
-python3 ragnostics-core.py --docs *.pdf --json > analysis.json
+python3 ragnostics-core.py --scan-directory ./data --json > analysis.json
 ```
+
+## Directory Scanning (NEW in v1.1.0)
+
+RAGnostics can now scan entire directory structures to detect common pitfalls when people try to "RAG everything":
+
+### What It Detects
+
+1. **Noise Problem** - When you have 10,000+ files, RAG returns random, irrelevant results
+2. **Correlation Attempts** - Queries expecting RAG to "find patterns across all data" (RAG retrieves, it doesn't analyze)
+3. **Mixed Data Chaos** - Spreadsheets mixed with PDFs confuse retrieval
+4. **Cost Bombs** - Estimates real embedding costs for massive datasets
+
+### Example Directory Scan Output
+
+```
+📁 Scanning directory: /home/user/company_data
+  Found 15,234 files (2,341.5 MB)
+  ⚠️  WARNING: EXTREME noise level detected!
+
+🚨 CORRELATION WARNING:
+   You appear to be trying to correlate data across directories.
+   RAG does NOT correlate - it only retrieves similar text.
+   Use data analytics tools for correlation.
+
+Problems detected:
+  ⚠️ 15,234 files - Extreme noise risk! RAG will return random results
+  🚫 Deep directory structure suggests correlation attempt
+  ⚠️ 45% structured data mixed with text - Will cause retrieval confusion
+
+Recommendations:
+  🚨 DO NOT USE RAG - Too many files will cause random, useless results
+  ✅ Alternative: Use Elasticsearch with careful indexing
+  ✅ For correlation: Use data warehouse + BI tools
+  💰 Estimated embedding cost: $234/month minimum
+```
+
+### When NOT to Use RAG (Directory Scanning Reveals)
+
+- **"Analyze all our data"** - RAG doesn't analyze, it retrieves
+- **"Find correlations"** - That's what SQL/Pandas/Spark do
+- **"10,000+ documents"** - Too much noise, results become random
+- **"Mixed Excel + PDF + JSON"** - Each needs different handling
 
 ## What You'll See
 
@@ -126,6 +199,23 @@ Instead of RAG, consider:
 • Custom logic layer for calculations
 ```
 
+### Massive Directory (Correlation Attempt)
+```
+DIRECTORY ANALYSIS
+Total files: 45,678
+Noise level: EXTREME
+Directory score: 5%
+
+🚨 CORRELATION WARNING:
+RAG does NOT correlate - it only retrieves similar text.
+
+❌ RAG is NOT recommended for your use case
+Instead use:
+• Data warehouse + BI tools for correlation analysis
+• Elasticsearch with careful curation
+• Pandas/Spark for data processing
+```
+
 ## Common Problems RAGnostics Detects
 
 ### Important Note on Tables and Math
@@ -157,6 +247,7 @@ The tool is intentionally conservative to prevent costly failures.
 | Real-time | "Current stock price" | RAG data is static | Use APIs |
 | Multi-step | "First do X then calculate Y" | Too complex | Decompose query |
 | Reasoning | "Why did profits decline?" | Needs thinking, not retrieval | Fine-tuned model |
+| Correlation | "Find patterns across all data" | RAG doesn't analyze | BI tools |
 
 ## Understanding the Scores
 
@@ -212,7 +303,22 @@ The tool might be processing large files. Use `--output` to save results:
 python3 ragnostics-core.py --docs large_file.pdf --output results.txt
 ```
 
+### Directory scan taking forever
+Large directories with thousands of files take time to analyze. Use `--no-recursive` to speed up:
+```bash
+python3 ragnostics-core.py --scan-directory ./huge_folder --no-recursive
+```
+
 ## FAQ
+
+**Q: Can RAG analyze all my company's data?**  
+A: No! This is a common misconception. RAG retrieves similar text, it doesn't analyze or correlate. Use our `--scan-directory` feature to see why your massive dataset won't work with RAG.
+
+**Q: Why does the tool say my 50,000 documents are "too noisy"?**  
+A: With that many documents, RAG will retrieve random, barely-relevant chunks. It's like searching for a needle in a haystack where every piece of hay looks vaguely like a needle. You need curation or better search tools.
+
+**Q: Can RAG find patterns across different data sources?**  
+A: No. RAG retrieves text similar to your query. Finding patterns/correlations requires analytical tools (SQL, Pandas, Tableau). RAG is retrieval, not analysis.
 
 **Q: Why does it say Excel files won't work with RAG?**  
 A: RAG is designed for unstructured text. Tables need different approaches like SQL or pandas.
@@ -234,23 +340,32 @@ A: Yes! Open an issue on [GitHub](https://github.com/ragnostics/ragnostics-tool)
 ### JSON Output for CI/CD
 ```bash
 # Use in automated pipelines
-python3 ragnostics-core.py --docs *.pdf --json | jq '.document_analysis.basic_score'
+python3 ragnostics-core.py --scan-directory ./docs --json | jq '.directory_analysis.rag_suitability_score'
 
 # Fail CI if score too low
-score=$(python3 ragnostics-core.py --docs *.pdf --json | jq '.document_analysis.basic_score')
+score=$(python3 ragnostics-core.py --scan-directory ./docs --json | jq '.directory_analysis.rag_suitability_score')
 if [ "$score" -lt 70 ]; then
   echo "RAG feasibility too low: $score%"
   exit 1
 fi
 ```
 
-### Batch Analysis
+### Batch Directory Analysis
 ```bash
 # Analyze multiple projects
 for dir in project1 project2 project3; do
   echo "Analyzing $dir..."
-  python3 ragnostics-core.py --docs $dir/*.pdf --output $dir/rag-analysis.txt
+  python3 ragnostics-core.py --scan-directory $dir --output $dir/rag-analysis.txt
 done
+```
+
+### Correlation Detection
+```bash
+# Check if your queries expect impossible correlations
+python3 ragnostics-core.py --scan-directory ./data \
+  --queries "What patterns exist across all departments?" \
+           "Correlate customer behavior with weather data" \
+           "Find common themes in all documents"
 ```
 
 ## Want More Features?
@@ -264,6 +379,8 @@ The free version gives you the essential feasibility check. For detailed recomme
 | Basic feasibility score | ✅ | ✅ |
 | Document analysis | ✅ | ✅ |
 | Query analysis | ✅ | ✅ |
+| Directory scanning | ✅ | ✅ |
+| Correlation detection | ✅ | ✅ |
 | Detailed recommendations | ❌ | ✅ |
 | Cost estimates | ❌ | ✅ |
 | Alternative architectures | ❌ | ✅ |
@@ -280,4 +397,4 @@ Built by engineers who've seen too many RAG projects fail for preventable reason
 
 ---
 
-**Remember**: Not every problem needs RAG. Sometimes a simple database query or API call is the better solution.
+**Remember**: Not every problem needs RAG. Sometimes a simple database query or API call is the better solution. And sometimes, you just need to organize your data better before throwing AI at it.
