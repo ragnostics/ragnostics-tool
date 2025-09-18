@@ -128,6 +128,16 @@ Instead of RAG, consider:
 
 ## Common Problems RAGnostics Detects
 
+### Important Note on Tables and Math
+
+Small tables (<50 rows) that fit in a single chunk CAN work with RAG for simple lookups.
+RAG fails when you need:
+- Aggregation across multiple tables/chunks
+- Actual calculation execution (not just formula retrieval)
+- Cross-references between distant data points
+
+The tool is intentionally conservative to prevent costly failures.
+
 ### Document Problems
 
 | File Type | RAG Compatibility | Why It Fails | Alternative |
