@@ -194,69 +194,79 @@ class RAGAnalyzerCore:
         
         return compatibility
     
-    def _analyze_query_complexity(self, query):
-        """Analyze if query can be answered by RAG"""
-        query_lower = query.lower()
-        
-        # Patterns that RAG can't handle
-        math_patterns = [
-            'calculate', 'compute', 'sum of', 'total', 'average', 'mean',
-            'add up', 'subtract', 'multiply', 'divide', 'percentage',
-            'how many', 'count', 'number of', '+', '-', '*', '/', '='
-        ]
-        
-        reasoning_patterns = [
-            'why did', 'analyze why', 'root cause', 'explain why',
-            'compare and contrast', 'evaluate', 'assess the impact',
-            'predict', 'forecast', 'what will happen if'
-        ]
-        
-        temporal_patterns = [
-            'latest', 'most recent', 'current', 'today', 'yesterday',
-            'this week', 'last month', 'real-time', 'now', 'at this moment'
-        ]
-        
-        multi_step_patterns = [
-            ' and then ', ' after that ', 'step by step',
-            'first.*then', 'followed by'
-        ]
-        
-        issues = []
-        complexity = "low"
-        
-        # Check for mathematical operations
-        if any(pattern in query_lower for pattern in math_patterns):
-            issues.append("Contains mathematical operations - RAG retrieves text, cannot compute")
-            complexity = "high"
-        
-        # Check for complex reasoning
-        if any(pattern in query_lower for pattern in reasoning_patterns):
-            issues.append("Requires reasoning/analysis - RAG only retrieves, doesn't think")
-            if complexity != "high":
-                complexity = "medium"
-        
-        # Check for temporal requirements
-        if any(pattern in query_lower for pattern in temporal_patterns):
-            issues.append("Requires current/real-time data - RAG data is static")
-            if complexity != "high":
-                complexity = "medium"
-        
-        # Check for multi-step queries
-        if any(pattern in query_lower for pattern in multi_step_patterns):
-            issues.append("Multi-step query - needs decomposition")
-            if complexity != "high":
-                complexity = "medium"
-        
-        # Check query length
-        if len(query) > 500:
-            issues.append("Very long query - may need simplification")
-            if complexity == "low":
-                complexity = "medium"
-        
-        return {
-            "complexity": complexity,
-            "issues": issues if issues else ["Query appears suitable for RAG"]
-        }
+	def _analyze_query_complexity(self, query):
+	    """Analyze if query can be answered by RAG"""
+	    query_lower = query.lower()
+	    
+	    # More nuanced patterns - distinguishing between retrieval and execution
+	    aggregation_patterns = ['sum of all', 'total across', 'average across', 'aggregate', 'combine all']
+	    execution_patterns = ['calculate', 'compute', 'solve for']
+	    simple_lookup = ['what is', 'find', 'show me', 'retrieve', 'get', 'list']
+	    
+	    # Keep existing patterns
+	    reasoning_patterns = [
+	        'why did', 'analyze why', 'root cause', 'explain why',
+	        'compare and contrast', 'evaluate', 'assess the impact',
+	        'predict', 'forecast', 'what will happen if'
+	    ]
+	    
+	    temporal_patterns = [
+	        'latest', 'most recent', 'current', 'today', 'yesterday',
+	        'this week', 'last month', 'real-time', 'now', 'at this moment'
+	    ]
+	    
+	    multi_step_patterns = [
+	        ' and then ', ' after that ', 'step by step',
+	        'first.*then', 'followed by'
+	    ]
+	    
+	    issues = []
+	    complexity = "low"
+	    
+	    # Check aggregation across multiple sources
+	    if any(pattern in query_lower for pattern in aggregation_patterns):
+	        issues.append("Requires aggregation across multiple sources - RAG retrieves but can't combine")
+	        complexity = "high"
+	    
+	    # Check execution needs
+	    elif any(pattern in query_lower for pattern in execution_patterns):
+	        issues.append("Requires execution - RAG retrieves formulas but can't run calculations")
+	        complexity = "high"
+	    
+	    # Check simple table lookup
+	    elif any(pattern in query_lower for pattern in simple_lookup) and 'table' in query_lower:
+	        issues.append("Table lookups work if table fits in single chunk (<50 rows)")
+	        complexity = "low"
+	    
+	    # Check for complex reasoning
+	    elif any(pattern in query_lower for pattern in reasoning_patterns):
+	        issues.append("Requires reasoning/analysis - RAG only retrieves, doesn't think")
+	        complexity = "medium"
+	    
+	    # Check for temporal requirements
+	    elif any(pattern in query_lower for pattern in temporal_patterns):
+	        issues.append("Requires current/real-time data - RAG data is static")
+	        complexity = "medium"
+	    
+	    # Check for multi-step queries
+	    elif any(pattern in query_lower for pattern in multi_step_patterns):
+	        issues.append("Multi-step query - needs decomposition")
+	        complexity = "medium"
+	    
+	    # Check query length
+	    if len(query) > 500:
+	        issues.append("Very long query - may need simplification")
+	        if complexity == "low":
+	            complexity = "medium"
+	    
+	    # Default if no issues found
+	    if not issues:
+	        issues = ["Query appears suitable for RAG"]
+	    
+	    return {
+	        "complexity": complexity,
+	        "issues": issues
+	    }
     
     def _calculate_document_score(self, analysis):
         """Calculate document suitability score (0-100)"""
@@ -266,9 +276,11 @@ class RAGAnalyzerCore:
         score = 100
         
         # Heavy penalty for structured files
-        if "structured" in analysis["file_types"]:
-            structured_ratio = analysis["file_types"]["structured"] / analysis["total_files"]
-            score -= structured_ratio * 60
+	if "structured" in doc_analysis["file_types"] and doc_analysis["file_types"]["structured"] > 0:
+	    report.append("")
+	    report.append(f"⚠️  Found {doc_analysis['file_types']['structured']} structured files (Excel/CSV)")
+	    report.append("   Small tables (<50 rows) can work if they fit in single chunks.")
+	    report.append("   Large tables or cross-table queries need SQL instead.")
         
         # Penalty for images
         if "image" in analysis["file_types"]:
