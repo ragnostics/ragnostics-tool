@@ -1,0 +1,5 @@
+# Core dependencies for ragnostics-core (minimal)
+# No external dependencies for maximum compatibility
+
+# Optional dependencies for enhanced features
+requests>=2.31.0
