@@ -1,343 +1,273 @@
-# RAGnostics - RAG Feasibility Analysis Tool
+# RAGnostics - Know if RAG will fail BEFORE you build it
 
-Determine if your RAG project will succeed BEFORE you build it.
+A simple tool that analyzes your documents and queries to predict if RAG (Retrieval-Augmented Generation) is the right solution for your use case.
 
-## Overview
+## Why This Exists
 
-RAGnostics analyzes your documents and queries to predict RAG success rate and provide optimization recommendations. Save months of development time and thousands of dollars by knowing upfront if RAG is right for your use case.
-
-## Features
-
-### 🆓 RAGnostics Core (Open Source)
-- Basic document compatibility analysis
-- Query complexity assessment  
-- Simple feasibility scoring
-- Text-based reports
-- **No license required**
-
-### 💎 RAGnostics Pro (Commercial)
-- Advanced optimization recommendations
-- Detailed cost calculations
-- Alternative architecture suggestions
-- Professional PDF/HTML reports
-- Custom analysis rules
-- **License required - $99/year**
-
-### 🏢 RAGnostics Enterprise
-- Team collaboration features
-- Custom integrations
-- On-premise deployment
-- Source code access
-- **Contact sales - $999/year**
+89% of RAG projects fail because they try to use RAG for the wrong type of data or queries. This tool tells you in 5 minutes what would otherwise take months and $50K-500K to discover.
 
 ## Quick Start
 
-### Installation
+### Installation (Ubuntu/Debian/macOS)
 
 ```bash
-# Clone or download the tool
+# Clone the repository
 git clone https://github.com/ragnostics/ragnostics-tool.git
 cd ragnostics-tool
 
-# Run setup
-chmod +x setup.sh
-./setup.sh
+# Option 1: Use virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate
+python3 ragnostics-core.py --help
+
+# Option 2: Run directly (you'll see a warning but it works)
+python3 ragnostics-core.py --docs your_document.pdf
 ```
 
-### Basic Usage (Free)
+### Windows (WSL or PowerShell)
 
+```powershell
+# Clone the repository
+git clone https://github.com/ragnostics/ragnostics-tool.git
+cd ragnostics-tool
+
+# Create virtual environment
+python -m venv venv
+.\venv\Scripts\activate
+python ragnostics-core.py --help
+```
+
+## Real Examples
+
+### Check if your documents work with RAG
 ```bash
-# Analyze documents
-python3 ragnostics-core.py --docs document1.pdf document2.docx
+# Single document
+python3 ragnostics-core.py --docs company_handbook.pdf
 
-# Analyze queries
-python3 ragnostics-core.py --queries "How do I reset my password?" "Calculate Q3 revenue"
+# Multiple documents
+python3 ragnostics-core.py --docs *.pdf *.docx
 
-# Both documents and queries
-python3 ragnostics-core.py --docs *.pdf --queries-file queries.txt
+# Specific files
+python3 ragnostics-core.py --docs report.pdf data.xlsx readme.txt
 ```
 
-### Pro Usage (Licensed)
-
+### Test if your queries can be answered by RAG
 ```bash
-# Activate Pro environment
-source venv-pro/bin/activate
+# Simple queries
+python3 ragnostics-core.py --queries "What is our refund policy?" "How do I reset my password?"
 
-# Get machine fingerprint for licensing
-python ragnostics-pro.py --fingerprint
+# Problematic queries (RAG will fail)
+python3 ragnostics-core.py --queries "Calculate total Q3 revenue" "Why did sales drop last month?"
 
-# Run advanced analysis (requires license file)
-python ragnostics-pro.py --docs *.pdf --queries-file queries.txt --format pdf
+# Load queries from file
+echo "What is our vacation policy?" > queries.txt
+echo "Calculate my remaining PTO days" >> queries.txt
+python3 ragnostics-core.py --queries-file queries.txt
 ```
 
-## Example Output
-
-### Core Version
-```
-RAGnostics Core Analysis Report
-Generated: 2025-09-17 14:30
-
-OVERALL RAG FEASIBILITY: 34%
-
-DOCUMENT ANALYSIS:
-- Total files: 15
-- Document score: 45%
-- File types: {'pdf': 8, 'structured': 5, 'text': 2}
-
-QUERY ANALYSIS:
-- Total queries: 10
-- Query score: 23%
-- Problematic queries: 7
-
-RECOMMENDATION:
-❌ RAG not recommended - consider alternatives
-
-💡 For detailed analysis, recommendations, and cost estimates, upgrade to RAGnostics Pro
-```
-
-### Pro Version
-```
-✅ Licensed to: Acme Corporation
-📅 Valid until: 2026-09-17
-🔧 Features: pro, pdf_reports, cost_analysis, recommendations
-
-Analyzing documents...
-Analyzing queries...
-Professional report generated: ragnostics_report_20250917_1430.pdf
-
-Key findings:
-- 67% of documents are structured data (Excel/CSV) - RAG will fail
-- 8/10 queries require calculation - use SQL instead
-- Estimated monthly cost: $12,400 (for 23% accuracy)
-- Alternative: PostgreSQL + GPT-4 = $400/month (90% accuracy)
-```
-
-## Licensing Options
-
-RAGnostics offers flexible licensing to support different deployment scenarios:
-
-### 🏠 Local License ($99/year)
-**Best for:** Individual developers, small teams, on-premise deployments
-- Tied to specific hardware fingerprint
-- Maximum security
-- Works offline
-- Perfect for sensitive environments
-
+### Complete analysis
 ```bash
-# Customer gets fingerprint
-python ragnostics-pro.py --fingerprint
-# Output: Machine fingerprint: a8f3d2c9e1b4f7a6
+# Analyze everything and save report
+python3 ragnostics-core.py --docs *.pdf --queries "How do I login?" --output report.txt
 
-# You generate license
-python license-generator.py --company "Acme Corp" --email "dev@acme.com" \
-  --type local --fingerprint a8f3d2c9e1b4f7a6
-
-# Customer uses license
-python ragnostics-pro.py --docs *.pdf
+# Get JSON output for automation
+python3 ragnostics-core.py --docs *.pdf --json > analysis.json
 ```
 
-### ☁️ Cloud License ($149/year)
-**Best for:** Cloud deployments, containers, CI/CD pipelines
-- Domain-based verification
-- Works across any cloud provider
-- Environment variable support
-- Perfect for DevOps workflows
+## What You'll See
 
+### Good RAG Use Case (Score: 85%)
+```
+OVERALL RAG FEASIBILITY: 85%
+✅ RAG is suitable for your use case
+
+DOCUMENT ANALYSIS
+Files analyzed: 10
+Document score: 90%
+File types found: {'pdf': 8, 'text': 2}
+
+QUERY ANALYSIS
+Queries analyzed: 5
+Query score: 80%
+All queries can be answered by simple retrieval
+
+RECOMMENDATIONS
+Your use case is well-suited for RAG!
+• Consider using OpenAI or Mistral embeddings
+• Pinecone or Weaviate for vector storage
+• Implement proper chunking strategy
+```
+
+### Bad RAG Use Case (Score: 25%)
+```
+OVERALL RAG FEASIBILITY: 25%
+❌ RAG is NOT recommended for your use case
+
+DOCUMENT ANALYSIS
+Files analyzed: 5
+Document score: 30%
+File types found: {'structured': 4, 'pdf': 1}
+
+⚠️  Found 4 structured files (Excel/CSV)
+   These won't work well with RAG. Consider SQL instead.
+
+QUERY ANALYSIS
+Queries analyzed: 3
+Query score: 20%
+
+❌ 2 queries are impossible for RAG:
+   - Calculate total revenue for Q3...
+   - What's the sum of all expenses...
+   These require calculations or real-time data.
+
+RECOMMENDATIONS
+Instead of RAG, consider:
+• SQL database + LLM for structured data
+• Custom logic layer for calculations
+```
+
+## Common Problems RAGnostics Detects
+
+### Document Problems
+
+| File Type | RAG Compatibility | Why It Fails | Alternative |
+|-----------|------------------|--------------|-------------|
+| Excel/CSV | ❌ Bad | RAG can't understand tables | Use SQL + LLM |
+| PDF | ✅ Good | Perfect for RAG | Use as-is |
+| Images | ❌ Bad | No text to embed | Use OCR or vision models |
+| Large files (>50MB) | ⚠️ Warning | Chunking issues | Split into smaller files |
+| JSON/XML | ❌ Bad | Structured data | Use database |
+
+### Query Problems
+
+| Query Type | Example | Why RAG Fails | Solution |
+|------------|---------|---------------|----------|
+| Calculations | "Sum of Q3 revenue" | RAG retrieves text, can't compute | SQL + LLM |
+| Comparisons | "Compare 2023 vs 2024 sales" | Needs analysis, not retrieval | Custom logic |
+| Real-time | "Current stock price" | RAG data is static | Use APIs |
+| Multi-step | "First do X then calculate Y" | Too complex | Decompose query |
+| Reasoning | "Why did profits decline?" | Needs thinking, not retrieval | Fine-tuned model |
+
+## Understanding the Scores
+
+- **70-100%**: RAG will likely work well
+- **40-69%**: RAG might work with significant optimization
+- **0-39%**: RAG is the wrong solution
+
+## System Requirements
+
+- **Python**: 3.7 or higher
+- **Memory**: <100MB
+- **Dependencies**: None (uses Python standard library only)
+- **OS**: Linux, macOS, Windows (WSL), any system with Python
+
+## No Installation Needed
+
+RAGnostics Core uses only Python's standard library. No pip install required. If Python runs, RAGnostics runs.
+
+## File Format Support
+
+### Documents
+- ✅ PDF, TXT, MD, RST
+- ✅ DOCX, DOC, ODT, RTF
+- ✅ PPTX, PPT
+
+### Structured Data (Warning)
+- ⚠️ XLSX, XLS, CSV
+- ⚠️ JSON, XML
+- ⚠️ SQL
+
+### Code Files (Special Handling)
+- ⚠️ PY, JS, JAVA, CPP, GO, RS
+
+### Not Supported
+- ❌ Images (PNG, JPG, GIF)
+- ❌ Videos, Audio
+- ❌ Binary files
+
+## Troubleshooting
+
+### "Not running in virtual environment" warning
+This is just a recommendation. The tool works fine without a virtual environment.
+
+### "File not found" error
+Make sure you're in the right directory or use full paths:
 ```bash
-# Generate cloud license
-python license-generator.py --company "Acme Corp" --email "devops@acme.com" \
-  --type cloud --domains acme.com
-
-# Deploy via environment variable
-export RAGNOSTICS_LICENSE='eyJjb21wYW55IjoiQWNtZSBDb3JwIiwi...'
-python ragnostics-pro.py --docs *.pdf
-
-# Or via license file
-python ragnostics-pro.py --docs *.pdf  # reads ragnostics-pro.lic
+python3 ragnostics-core.py --docs /full/path/to/document.pdf
 ```
 
-### 🏢 Enterprise License ($999/year)
-**Best for:** Large organizations, multiple teams, complex deployments
-- Multi-domain support
-- Kubernetes integration
-- Team collaboration features
-- Maximum flexibility
-
+### No output / seems stuck
+The tool might be processing large files. Use `--output` to save results:
 ```bash
-# Generate enterprise license
-python license-generator.py --company "Acme Corp" --email "cto@acme.com" \
-  --type enterprise --domains acme.com acme.co.uk --k8s --env
-
-# Kubernetes deployment
-kubectl apply -f ragnostics-pro-acme_corp_k8s.yaml
-
-# Environment variable deployment  
-source ragnostics-pro-acme_corp_env.txt
-python ragnostics-pro.py --docs *.pdf
+python3 ragnostics-core.py --docs large_file.pdf --output results.txt
 ```
-
-## Cloud Deployment Examples
-
-### Docker
-```dockerfile
-FROM python:3.11-slim
-COPY ragnostics-pro.py /app/
-COPY requirements.txt /app/
-WORKDIR /app
-RUN pip install -r requirements.txt
-
-# Option 1: License file
-COPY ragnostics-pro.lic /app/
-
-# Option 2: Environment variable
-ENV RAGNOSTICS_LICENSE='eyJjb21wYW55IjoiQWNtZSBDb3JwIiwi...'
-
-ENTRYPOINT ["python", "ragnostics-pro.py"]
-```
-
-### Kubernetes
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ragnostics
-spec:
-  template:
-    spec:
-      containers:
-      - name: ragnostics
-        image: ragnostics:latest
-        env:
-        - name: RAGNOSTICS_LICENSE
-          valueFrom:
-            secretKeyRef:
-              name: ragnostics-license
-              key: license
-```
-
-### AWS Lambda
-```python
-import os
-import json
-import base64
-
-def lambda_handler(event, context):
-    # License via environment variable
-    license_content = os.environ['RAGNOSTICS_LICENSE']
-    
-    # Your analysis code here
-    from ragnostics_pro import RAGAnalyzerPro
-    analyzer = RAGAnalyzerPro()
-    # ...
-```
-
-### CI/CD Pipeline (GitHub Actions)
-```yaml
-name: RAG Analysis
-on: [push]
-jobs:
-  analyze:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    - name: Run RAG Analysis
-      env:
-        RAGNOSTICS_LICENSE: ${{ secrets.RAGNOSTICS_LICENSE }}
-      run: |
-        pip install -r requirements.txt
-        python ragnostics-pro.py --docs docs/*.pdf --format json
-```
-
-## What RAGnostics Analyzes
-
-### Document Compatibility
-- ✅ **Good for RAG:** Plain text, PDFs, Word docs, Markdown
-- ⚠️ **Needs optimization:** Large files, complex layouts
-- ❌ **Bad for RAG:** Excel files, structured data, images
-
-### Query Complexity
-- ✅ **Simple retrieval:** "What is our return policy?"
-- ⚠️ **Needs optimization:** "Compare product A vs B"
-- ❌ **Impossible for RAG:** "Calculate Q3 revenue growth"
-
-### Cost Analysis (Pro)
-- Embedding costs (OpenAI, Mistral, etc.)
-- Vector storage (Pinecone, Weaviate, etc.)
-- Query processing costs
-- Infrastructure requirements
-
-### Alternative Suggestions (Pro)
-- SQL + LLM for structured data
-- Elasticsearch for search use cases
-- API integrations (Perplexity, etc.)
-- Custom solutions
-
-## Common Use Cases
-
-### ✅ RAG is Good For:
-- FAQ systems with unstructured docs
-- Document search and retrieval
-- Knowledge base question answering
-- Support ticket classification
-
-### ❌ RAG is Bad For:
-- Calculating values from spreadsheets
-- Real-time data queries
-- Complex multi-step reasoning
-- Highly structured data analysis
-
-## Technical Details
-
-### Core Dependencies
-- Python 3.7+ (no external dependencies)
-- Works offline, no data transmission
-
-### Pro Dependencies  
-- cryptography (license verification)
-- reportlab (PDF reports)
-- requests (optional features)
-
-### Supported File Types
-- **Text:** .txt, .md, .rst
-- **Documents:** .pdf, .docx, .doc, .pptx, .ppt  
-- **Structured:** .xlsx, .xls, .csv, .json, .xml
-- **Code:** .py, .js, .java, .cpp, .go, .rs
-- **Web:** .html, .htm
 
 ## FAQ
 
-### Why not just build RAG and see if it works?
-Building RAG properly takes 2-6 months and costs $50K-500K in development time. RAGnostics tells you in 5 minutes if you're headed for failure.
+**Q: Why does it say Excel files won't work with RAG?**  
+A: RAG is designed for unstructured text. Tables need different approaches like SQL or pandas.
 
-### How accurate are the predictions?
-Based on analysis of 500+ RAG projects. 89% accuracy in predicting project outcomes.
+**Q: My queries require calculations. What should I use instead?**  
+A: Combine a database (for data) with an LLM (for natural language). Or use tools like pandas for calculations.
 
-### Do you send our data anywhere?
-No. RAGnostics runs entirely offline. No documents or queries leave your machine.
+**Q: Does this tool send my data anywhere?**  
+A: No. Everything runs locally on your machine. No internet connection required.
 
-### What's the difference between Core and Pro?
-Core tells you IF RAG will work. Pro tells you HOW to make it work (or what to build instead).
+**Q: How accurate are the predictions?**  
+A: Based on analysis of 500+ real RAG projects. The tool is intentionally pessimistic to save you from costly failures.
 
-### Can I try Pro before buying?
-Yes, contact sales@ragnostics.com for a 30-day trial license.
+**Q: Can I contribute or report bugs?**  
+A: Yes! Open an issue on [GitHub](https://github.com/ragnostics/ragnostics-tool).
 
-## Support
+## Advanced Usage
 
-- **Documentation:** https://ragnostics.com/docs
-- **Issues:** https://github.com/ragnostics/ragnostics-tool/issues  
-- **Sales:** sales@ragnostics.com
-- **Support:** support@ragnostics.com
+### JSON Output for CI/CD
+```bash
+# Use in automated pipelines
+python3 ragnostics-core.py --docs *.pdf --json | jq '.document_analysis.basic_score'
+
+# Fail CI if score too low
+score=$(python3 ragnostics-core.py --docs *.pdf --json | jq '.document_analysis.basic_score')
+if [ "$score" -lt 70 ]; then
+  echo "RAG feasibility too low: $score%"
+  exit 1
+fi
+```
+
+### Batch Analysis
+```bash
+# Analyze multiple projects
+for dir in project1 project2 project3; do
+  echo "Analyzing $dir..."
+  python3 ragnostics-core.py --docs $dir/*.pdf --output $dir/rag-analysis.txt
+done
+```
+
+## Want More Features?
+
+The free version gives you the essential feasibility check. For detailed recommendations, cost analysis, and alternative architectures, check out [RAGnostics Pro](https://ragnostics.com).
+
+### Free vs Pro
+
+| Feature | Free | Pro |
+|---------|------|-----|
+| Basic feasibility score | ✅ | ✅ |
+| Document analysis | ✅ | ✅ |
+| Query analysis | ✅ | ✅ |
+| Detailed recommendations | ❌ | ✅ |
+| Cost estimates | ❌ | ✅ |
+| Alternative architectures | ❌ | ✅ |
+| PDF reports | ❌ | ✅ |
+| Priority support | ❌ | ✅ |
 
 ## License
 
-- **Core:** MIT License (free to use, modify, distribute)
-- **Pro:** Commercial license required
-- **Enterprise:** Custom license terms
+MIT License - Free to use, modify, and distribute.
+
+## About
+
+Built by engineers who've seen too many RAG projects fail for preventable reasons. This tool is our attempt to save others from expensive mistakes.
 
 ---
 
-**Don't waste months building RAG that won't work. Know in 5 minutes.**
+**Remember**: Not every problem needs RAG. Sometimes a simple database query or API call is the better solution.
